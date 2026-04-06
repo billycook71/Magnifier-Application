@@ -3,7 +3,7 @@ Localized Zoom feature in C# using WPF
 
 This is a small desktop app that I've built in Windows Presentation Foundation (WPF).
 
-![Magnifier Demo](MagnifierAppDemo.gif)
+![Magnifier Demo](MagnificationAppDemo.gif)
 
 The idea behind the application was to have a lightweight zoom feature for reading small text while not having to 
 change my display's resolution/scaling. The application captures a region near the cursor in a floating lens that
