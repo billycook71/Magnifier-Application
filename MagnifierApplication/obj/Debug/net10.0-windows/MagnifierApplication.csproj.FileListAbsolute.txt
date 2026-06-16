@@ -18,3 +18,6 @@ C:\Users\billy\source\repos\MagnifierApplication\MagnifierApplication\obj\Debug\
 C:\Users\billy\source\repos\MagnifierApplication\MagnifierApplication\obj\Debug\net10.0-windows\MagnifierApplication.pdb
 C:\Users\billy\source\repos\MagnifierApplication\MagnifierApplication\obj\Debug\net10.0-windows\MagnifierApplication.genruntimeconfig.cache
 C:\Users\billy\source\repos\MagnifierApplication\MagnifierApplication\obj\Debug\net10.0-windows\ref\MagnifierApplication.dll
+C:\Users\billy\source\repos\MagnifierApplication\MagnifierApplication\obj\Debug\net10.0-windows\MagnifierApplication.sourcelink.json
+C:\Users\billy\source\repos\MagnifierApplication\MagnifierApplication\obj\Debug\net10.0-windows\SettingsWindow.g.cs
+C:\Users\billy\source\repos\MagnifierApplication\MagnifierApplication\obj\Debug\net10.0-windows\SettingsWindow.baml

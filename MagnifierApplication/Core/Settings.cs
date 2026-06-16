@@ -8,8 +8,17 @@ using System.Text;
 
 namespace MagnifierApplication.Core
 {
-    internal class Settings
+    public enum LensShape
     {
+        Circle,
+        Square
+    }
+
+    public class Settings
+    {
+        //set default shape to circle
+        public LensShape Shape = LensShape.Circle;
+        
         //Width/height of the capture window
         public int CaptureSize = 100;
 
@@ -18,15 +27,15 @@ namespace MagnifierApplication.Core
 
         //How much to offset the captured region in relevance to the cursor
         //Affects what the lense shows
-        public int CaptureOffsetX = 0;
-        public int CaptureOffsetY = 0;
+        public int CaptureOffsetX = -40;
+        public int CaptureOffsetY = -40;
 
         //Offset the magnifier relevant to the cursor
         //Determines where the lense appears on the screen
         public int WindowOffsetX = 140;
         public int WindowOffsetY = 40;
 
-        //Diameter of the lense
+        //Diameter of the lens
         public int LensSize = 200;
     }
 }

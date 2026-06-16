@@ -21,11 +21,32 @@
     the window inside is clipped into a circular shape, creating the magnifying lens effect.
     -->
     
-    <Grid>
-        <Image Name="MagnifierImage" Stretch="Fill">
-            <Image.Clip>
-                <EllipseGeometry Center="100,100" RadiusX="100" RadiusY="100"/>
-            </Image.Clip>
-        </Image>
+    <Grid Margin="12">
+        <Image Name="MagnifierImage" Stretch="Fill"/>
+
+        <Ellipse Name="CircleBorder"
+                 Stroke="Black"
+                 StrokeThickness="3"
+                 Fill="Transparent"
+                 IsHitTestVisible="False">
+            <Ellipse.Effect>
+                <DropShadowEffect BlurRadius="12"
+                                  ShadowDepth="8"
+                                  Opacity="0.8"/>
+            </Ellipse.Effect>
+        </Ellipse>
+
+        <Border Name="SquareBorder"
+                BorderBrush="Black"
+                BorderThickness="3"
+                Background="Transparent"
+                Visibility="Collapsed"
+                IsHitTestVisible="False">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="10"
+                                  ShadowDepth="2"
+                                  Opacity="0.5"/>
+            </Border.Effect>
+        </Border>
     </Grid>
 </Window>

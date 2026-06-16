@@ -52,8 +52,12 @@ namespace MagnifierApplication
                 _cursor,
                 new ScreenCaptureService(),
                 new Rendering.MagnifierRenderer(),
-                new Settings()
+                _settings
                 );
+
+            ////temporary: open settings window automatically while testing
+            var settingsWindow = new SettingsWindow(_settings);
+            settingsWindow.Show();
 
             StartLoop();
         }
@@ -89,6 +93,8 @@ namespace MagnifierApplication
             {
                 if (!_enabled) return;
 
+                UpdateLensVisuals();
+
                 MagnifierImage.Source = _engine.UpdateFrame();
                 UpdatePosition();
             };
@@ -120,6 +126,41 @@ namespace MagnifierApplication
         {
             _hotkey?.ProcessMessage(msg, wParam);
             return IntPtr.Zero;
+        }
+
+        //Updates lens size/shape in real-time
+        private void UpdateLensVisuals()
+        {
+            int shadowPadding = 24;
+
+            Width = _settings.LensSize + shadowPadding;
+            Height = _settings.LensSize+ shadowPadding;
+
+            MagnifierImage.Width = _settings.LensSize;
+            MagnifierImage.Height = _settings.LensSize;
+
+            CircleBorder.Width = _settings.LensSize;
+            CircleBorder.Height = _settings.LensSize;
+
+            SquareBorder.Width = _settings.LensSize;
+            SquareBorder.Height = _settings.LensSize;
+
+            if (_settings.Shape == LensShape.Circle)
+            {
+                MagnifierImage.Clip = new EllipseGeometry(
+                    new System.Windows.Point(_settings.LensSize / 2.0, _settings.LensSize / 2.0),
+                    _settings.LensSize / 2.0,
+                    _settings.LensSize / 2.0);
+
+                CircleBorder.Visibility = Visibility.Visible;
+                SquareBorder.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                MagnifierImage.Clip = null;
+                CircleBorder.Visibility = Visibility.Collapsed;
+                SquareBorder.Visibility = Visibility.Visible;
+            }
         }
     }
 }

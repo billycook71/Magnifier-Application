@@ -1,0 +1,50 @@
+﻿<Window x:Class="MagnifierApplication.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MagnifierApplication"
+        mc:Ignorable="d"
+        Title="Magnifier Settings" Height="450" Width="800">
+    <StackPanel Margin="20">
+        
+        <TextBlock Text="Zoom"/>
+        <Slider Name="ZoomSlider"
+                Minimum="1"
+                Maximum="6"
+                TickFrequency="1"
+                IsSnapToTickEnabled="True"/>
+        
+        <TextBlock Text="Capture Size" Margin="0,15,0,0"/>
+        <Slider Name="CaptureSizeSlider"
+                Minimum="50"
+                Maximum="300"
+                TickFrequency="10"
+                IsSnapToTickEnabled="True"/>
+
+        <TextBlock Text="Lens Size" Margin="0,15,0,0"/>
+        <Slider Name="LensSizeSlider"
+                Minimum="100"
+                Maximum="400"
+                TickFrequency="10"
+                IsSnapToTickEnabled="True" />
+
+        <TextBlock Text="Window Offset X" Margin="0,15,0,0"/>
+        <Slider Name="WindowOffsetXSlider"
+                Minimum="-300"
+                Maximum="300"/>
+
+        <TextBlock Text="Window Offset Y" Margin="0,15,0,0"/>
+        <Slider Name="WindowOffsetYSlider"
+                Minimum="-300"
+                Maximum="300"/>
+
+        <TextBlock Text="Circle / Square" Margin="0,15,0,0"/>
+        <ComboBox Name="ShapeComboBox"
+                  SelectedIndex="0">
+            <ComboBoxItem Content="Circle" />
+            <ComboBoxItem Content="Square" />
+        </ComboBox>
+
+    </StackPanel>
+</Window>
