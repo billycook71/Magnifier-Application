@@ -36,18 +36,23 @@ namespace MagnifierApplication.Core
         {
             var cursorPos = _cursor.GetPosition();
 
+            //calculate the capturesize with the magnification spec
+            int captureSize = Math.Max(
+                1, (int)(_settings.LensSize / _settings.Magnification)
+                );
+
             //Define the area of the screen to capture
             //Capture offset in settings determines what appears inside the magnifier
             var region = new Rectangle(
             (int)cursorPos.X + _settings.CaptureOffsetX,
             (int)cursorPos.Y + _settings.CaptureOffsetY,
-            _settings.CaptureSize,
-            _settings.CaptureSize
+            captureSize,
+            captureSize
             );
 
             //Capture the raw screen region, then render at the zoom level from settings
-            var raw = _capture.Capture(region);
-            return _renderer.Render(raw, _settings.Zoom);
+            using var raw = _capture.Capture(region);
+            return _renderer.Render(raw, _settings.LensSize);
         }
     }
 }

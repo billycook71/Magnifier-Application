@@ -28,6 +28,7 @@ namespace MagnifierApplication
         private CursorService _cursor;
         private HotKeyService? _hotkey;
         private Settings _settings;
+        private SettingsStorageService _settingsStorage;
 
         //Determins whether lens is active
         private bool _enabled = true;
@@ -41,7 +42,8 @@ namespace MagnifierApplication
             _cursor = new CursorService();
 
             //create one shared settings instance so UI and engine can read from the same configuration
-            _settings = new Settings();
+            _settingsStorage = new SettingsStorageService();
+            _settings = _settingsStorage.Load();
 
             //set window size from settings
             Width = _settings.LensSize;
@@ -56,7 +58,7 @@ namespace MagnifierApplication
                 );
 
             ////temporary: open settings window automatically while testing
-            var settingsWindow = new SettingsWindow(_settings);
+            var settingsWindow = new SettingsWindow(_settings, _settingsStorage);
             settingsWindow.Show();
 
             StartLoop();
@@ -141,9 +143,12 @@ namespace MagnifierApplication
 
             CircleBorder.Width = _settings.LensSize;
             CircleBorder.Height = _settings.LensSize;
+            CircleBorder.StrokeThickness = _settings.BorderThickness;
 
             SquareBorder.Width = _settings.LensSize;
             SquareBorder.Height = _settings.LensSize;
+            SquareBorder.BorderThickness = new Thickness(_settings.BorderThickness);
+
 
             if (_settings.Shape == LensShape.Circle)
             {

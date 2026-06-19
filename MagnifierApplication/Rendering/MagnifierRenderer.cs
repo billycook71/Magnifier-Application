@@ -14,20 +14,20 @@ namespace MagnifierApplication.Rendering
     internal class MagnifierRenderer
     {
         ///Enlarges source image and returns as a bitmap source to be displayed by WPF Image control
-        public BitmapSource Render(Bitmap src, int zoom)
+        public BitmapSource Render(Bitmap src, int targetSize)
         {
             //cretes a larger bitmap based on the zoom multiplier
-            var zoomed = new Bitmap(src.Width * zoom, src.Height * zoom);
+            var rendered = new Bitmap(targetSize, targetSize);
 
-            using (Graphics g = Graphics.FromImage(zoomed))
+            using (Graphics g = Graphics.FromImage(rendered))
             {
                 //nearest neighbor keeps edges sharper to avoid blurry text
                 g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
                 //Draw the source bitmap into the larger destination bitmap
-                g.DrawImage(src, 0, 0, zoomed.Width, zoomed.Height);
+                g.DrawImage(src, 0, 0, targetSize, targetSize);
             }
 
-            return ConvertToBitmapSource(zoomed);
+            return ConvertToBitmapSource(rendered);
         }
 
         ///Converts a System.Drawing.Bitmap into a WPF BitmapSource

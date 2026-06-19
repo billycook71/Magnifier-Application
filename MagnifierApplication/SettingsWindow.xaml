@@ -5,46 +5,153 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MagnifierApplication"
         mc:Ignorable="d"
-        Title="Magnifier Settings" Height="450" Width="800">
+        Title="Magnifier Settings" Height="600" Width="500">
+    
+    
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
     <StackPanel Margin="20">
         
-        <TextBlock Text="Zoom"/>
-        <Slider Name="ZoomSlider"
-                Minimum="1"
-                Maximum="6"
-                TickFrequency="1"
-                IsSnapToTickEnabled="True"/>
-        
-        <TextBlock Text="Capture Size" Margin="0,15,0,0"/>
-        <Slider Name="CaptureSizeSlider"
-                Minimum="50"
-                Maximum="300"
-                TickFrequency="10"
-                IsSnapToTickEnabled="True"/>
-
-        <TextBlock Text="Lens Size" Margin="0,15,0,0"/>
-        <Slider Name="LensSizeSlider"
-                Minimum="100"
-                Maximum="400"
-                TickFrequency="10"
-                IsSnapToTickEnabled="True" />
-
-        <TextBlock Text="Window Offset X" Margin="0,15,0,0"/>
-        <Slider Name="WindowOffsetXSlider"
-                Minimum="-300"
-                Maximum="300"/>
-
-        <TextBlock Text="Window Offset Y" Margin="0,15,0,0"/>
-        <Slider Name="WindowOffsetYSlider"
-                Minimum="-300"
-                Maximum="300"/>
+        <TextBlock Text="Appearance"
+                   FontWeight="Bold"
+                   FontSize="14"
+                   Margin="0,0,0,8"/>
 
         <TextBlock Text="Circle / Square" Margin="0,15,0,0"/>
         <ComboBox Name="ShapeComboBox"
-                  SelectedIndex="0">
+                      SelectedIndex="0">
             <ComboBoxItem Content="Circle" />
             <ComboBoxItem Content="Square" />
         </ComboBox>
+        
+        <Grid Margin="0,15,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="Lens Size"/>
+                <TextBlock Name="LensSizeValueText"
+                           Grid.Column="1"
+                           Text="200px" />
+            </Grid>
+            <Slider Name="LensSizeSlider"
+                    Minimum="100"
+                    Maximum="400"
+                    TickFrequency="10"
+                    IsSnapToTickEnabled="True" />
+
+        <Grid Margin="0,15,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Border Thickness"/>
+            <TextBlock Name="BorderThicknessValueText" Grid.Column="1" Text="3px"/>
+        </Grid>
+        <Slider Name="BorderThicknessSlider"
+                    Minimum="0"
+                    Maximum="10"
+                    TickFrequency="1"
+                    IsSnapToTickEnabled="True"/>
+
+
+
+        
+        <TextBlock Text="Magnification"
+                   FontWeight="Bold"
+                   FontSize="14"
+                   Margin="0,25,0,8"/>
+
+        <Grid Margin="0,15,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Text="Magnification"/>
+            <TextBlock Name="MagnificationValueText"
+                           Grid.Column="1"
+                           Text="2.0x" />
+        </Grid>
+        <Slider Name="MagnificationSlider"
+                    Minimum="1"
+                    Maximum="6"
+                    TickFrequency="0.5"
+                    IsSnapToTickEnabled="True"
+                    AutoToolTipPlacement="TopLeft"
+                    AutoToolTipPrecision="1"
+                    IsMoveToPointEnabled="True"/>
+
+
+        <TextBlock Text="Position"
+           FontWeight="Bold"
+           FontSize="14"
+           Margin="0,25,0,8"/>
+
+        <Grid Margin="0,15,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Lens Offset X"/>
+            <TextBlock Name="WindowOffsetXValueText" Grid.Column="1" Text="140px"/>
+        </Grid>
+        <Slider Name="WindowOffsetXSlider"
+                    Minimum="-300"
+                    Maximum="300"/>
+
+        <Grid Margin="0,15,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Lens Offset Y"/>
+            <TextBlock Name="WindowOffsetYValueText" Grid.Column="1" Text="40px"/>
+        </Grid>
+        <Slider Name="WindowOffsetYSlider"
+                    Minimum="-300"
+                    Maximum="300"/>
+
+        <TextBlock Text="Capture"
+           FontWeight="Bold"
+           FontSize="14"
+           Margin="0,25,0,8"/>
+
+        <TextBlock Text="Capture Source Preset" />
+        <ComboBox Name="CapturePresetComboBox"
+                      Margin="0,4,0,8">
+            <ComboBoxItem Content="Centered on Cursor"/>
+            <ComboBoxItem Content="Above Cursor"/>
+            <ComboBoxItem Content="Below Cursor"/>
+            <ComboBoxItem Content="Left of Cursor"/>
+            <ComboBoxItem Content="Right of Cursor"/>
+            <ComboBoxItem Content="Custom"/>
+        </ComboBox>
+
+        <Grid Margin="0,15,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Capture Offset X"/>
+            <TextBlock Name="CaptureOffsetXValueText" Grid.Column="1" Text="-50px"/>
+        </Grid>
+        <Slider Name="CaptureOffsetXSlider"
+                    Minimum="-300"
+                    Maximum="300"/>
+
+        <Grid Margin="0,15,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Capture Offset Y"/>
+            <TextBlock Name="CaptureOffsetYValueText" Grid.Column="1" Text="-50px"/>
+        </Grid>
+        <Slider Name="CaptureOffsetYSlider"
+                    Minimum="-300"
+                    Maximum="300"/>
 
     </StackPanel>
+    </ScrollViewer>
 </Window>

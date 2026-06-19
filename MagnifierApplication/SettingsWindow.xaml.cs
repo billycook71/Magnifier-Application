@@ -1,4 +1,5 @@
 ﻿using MagnifierApplication.Core;
+using MagnifierApplication.Services;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -18,54 +19,171 @@ namespace MagnifierApplication
     /// </summary>
     public partial class SettingsWindow : Window
     {
+        private bool _isUpdatingControls;
         private readonly Settings _settings;
-        public SettingsWindow(Settings settings)
+        private readonly SettingsStorageService _settingsStorage;
+        public SettingsWindow(Settings settings, SettingsStorageService settingsStorage)
         {
             InitializeComponent();
 
             _settings = settings;
+            _settingsStorage = settingsStorage;
 
             LoadSettingsIntoControls();
+            UpdateValueLabels();
             WireEvents();
         }
 
         private void LoadSettingsIntoControls()
         {
-            ZoomSlider.Value = _settings.Zoom;
-            CaptureSizeSlider.Value = _settings.CaptureSize;
+            _isUpdatingControls = true;
+
+            MagnificationSlider.Value = _settings.Magnification;
             LensSizeSlider.Value = _settings.LensSize;
             WindowOffsetXSlider.Value = _settings.WindowOffsetX;
             WindowOffsetYSlider.Value = _settings.WindowOffsetY;
+            BorderThicknessSlider.Value = _settings.BorderThickness;
+            CaptureOffsetXSlider.Value = _settings.CaptureOffsetX;
+            CaptureOffsetYSlider.Value = _settings.CaptureOffsetY;
+            CapturePresetComboBox.SelectedIndex = 5; //Custom for now
 
             ShapeComboBox.SelectedIndex=
                 _settings.Shape == LensShape.Circle ? 0 : 1;
+
+            _isUpdatingControls = false;
         }
 
         private void WireEvents()
         {
-            ZoomSlider.ValueChanged += (s, e) =>
-                _settings.Zoom = (int)ZoomSlider.Value;
+            MagnificationSlider.ValueChanged += (s, e) =>
+            {
+                _settings.Magnification = MagnificationSlider.Value;
+                UpdateValueLabels();
+                _settingsStorage.Save(_settings);
+            };
 
-            CaptureSizeSlider.ValueChanged += (s, e) =>
-                _settings.CaptureSize = (int)CaptureSizeSlider.Value;
 
             LensSizeSlider.ValueChanged += (s, e) =>
+            {
                 _settings.LensSize = (int)LensSizeSlider.Value;
+                UpdateValueLabels();
+                _settingsStorage.Save(_settings);
+            };
+
 
             WindowOffsetXSlider.ValueChanged += (s, e) =>
+            {
                 _settings.WindowOffsetX = (int)WindowOffsetXSlider.Value;
+                UpdateValueLabels();
+                _settingsStorage.Save(_settings);
+            };
+
 
             WindowOffsetYSlider.ValueChanged += (s, e) =>
+            {
                 _settings.WindowOffsetY = (int)WindowOffsetYSlider.Value;
+                UpdateValueLabels();
+                _settingsStorage.Save(_settings);
+            };
+                
 
 
             ShapeComboBox.SelectionChanged += (s, e) =>
             {
                 if (ShapeComboBox.SelectedIndex == 0)
                     _settings.Shape = LensShape.Circle;
+                    
                 else
                     _settings.Shape = LensShape.Square;
             };
+
+            CapturePresetComboBox.SelectionChanged += (s, e) =>
+            {
+                switch (CapturePresetComboBox.SelectedIndex)
+                {
+                    case 0: //centered
+                        _settings.CaptureOffsetX = -50;
+                        _settings.CaptureOffsetY = -50;
+                        break;
+
+                    case 1: //Above
+                        _settings.CaptureOffsetX = -50;
+                        _settings.CaptureOffsetY = -100;
+                        break;
+
+                    case 2: //Below
+                        _settings.CaptureOffsetX = -50;
+                        _settings.CaptureOffsetY = 0;
+                        break;
+
+                    case 3: //Left
+                        _settings.CaptureOffsetX = -100;
+                        _settings.CaptureOffsetY = -50;
+                        break;
+
+                    case 4: //Right
+                        _settings.CaptureOffsetX = 0;
+                        _settings.CaptureOffsetY = -50;
+                        break;
+
+                    case 5: //Custom
+                        return;
+                }
+
+                _isUpdatingControls = true;
+
+                CaptureOffsetXSlider.Value = _settings.CaptureOffsetX;
+                CaptureOffsetYSlider.Value = _settings.CaptureOffsetY;
+
+                _isUpdatingControls = false;
+
+                UpdateValueLabels();
+                _settingsStorage.Save(_settings);
+            };
+
+            CaptureOffsetXSlider.ValueChanged += (s, e) =>
+            {
+                _settings.CaptureOffsetX = (int)CaptureOffsetXSlider.Value;
+
+                if (!_isUpdatingControls)
+                    CapturePresetComboBox.SelectedIndex = 5;
+
+                UpdateValueLabels();
+                _settingsStorage.Save(_settings);
+            };
+
+            CaptureOffsetYSlider.ValueChanged += (s, e) =>
+            {
+                _settings.CaptureOffsetY = (int)CaptureOffsetYSlider.Value;
+
+                if (!_isUpdatingControls)
+                    CapturePresetComboBox.SelectedIndex = 5;
+
+                UpdateValueLabels();
+                _settingsStorage.Save(_settings);
+            };
+
+            BorderThicknessSlider.ValueChanged += (s, e) =>
+            {
+                _settings.BorderThickness = (int)BorderThicknessSlider.Value;
+                UpdateValueLabels();
+                _settingsStorage.Save(_settings);
+
+            };
+
+        }
+
+        private void UpdateValueLabels()
+        {
+            MagnificationValueText.Text = $"{_settings.Magnification:0.0}x";
+            LensSizeValueText.Text = $"{_settings.LensSize}px";
+            BorderThicknessValueText.Text = $"{_settings.BorderThickness}px";
+
+            WindowOffsetXValueText.Text = $"{_settings.WindowOffsetX}px";
+            WindowOffsetYValueText.Text = $"{_settings.WindowOffsetY}px";
+
+            CaptureOffsetXValueText.Text = $"{_settings.CaptureOffsetX}px";
+            CaptureOffsetYValueText.Text = $"{_settings.CaptureOffsetY}px";
         }
     }
 }

@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MagnifierApplication")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+80ae37e46fb38e4f4cc9e68be4a2cb719852c7a3")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7acb86a7a16df71815b02ceab3937f5c5114dcc8")]
 [assembly: System.Reflection.AssemblyProductAttribute("MagnifierApplication")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MagnifierApplication")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
