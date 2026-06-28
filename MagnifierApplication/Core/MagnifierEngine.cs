@@ -17,7 +17,7 @@ namespace MagnifierApplication.Core
         private readonly CursorService _cursor;
         private readonly ScreenCaptureService _capture;
         private readonly MagnifierRenderer _renderer;
-        private readonly Settings _settings;
+        public Settings Settings { get; set; }
 
         public MagnifierEngine(
             CursorService cursor,
@@ -28,7 +28,7 @@ namespace MagnifierApplication.Core
             _cursor = cursor;
             _capture = capture;
             _renderer = renderer;
-            _settings = settings;
+            Settings = settings;
         }
 
         //Produces the latest magnified frame based on current cursor position
@@ -38,21 +38,21 @@ namespace MagnifierApplication.Core
 
             //calculate the capturesize with the magnification spec
             int captureSize = Math.Max(
-                1, (int)(_settings.LensSize / _settings.Magnification)
+                1, (int)(Settings.LensSize / Settings.Magnification)
                 );
 
             //Define the area of the screen to capture
             //Capture offset in settings determines what appears inside the magnifier
             var region = new Rectangle(
-            (int)cursorPos.X + _settings.CaptureOffsetX,
-            (int)cursorPos.Y + _settings.CaptureOffsetY,
+            (int)cursorPos.X + Settings.CaptureOffsetX,
+            (int)cursorPos.Y + Settings.CaptureOffsetY,
             captureSize,
             captureSize
             );
 
             //Capture the raw screen region, then render at the zoom level from settings
             using var raw = _capture.Capture(region);
-            return _renderer.Render(raw, _settings.LensSize);
+            return _renderer.Render(raw, Settings.LensSize);
         }
     }
 }

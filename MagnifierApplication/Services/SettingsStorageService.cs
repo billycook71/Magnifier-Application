@@ -1,7 +1,5 @@
 ﻿using MagnifierApplication.Core;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -27,32 +25,36 @@ namespace MagnifierApplication.Services
             _settingsFilePath = Path.Combine(_settingsDirectory, "settings.json");
         }
 
-        public Settings Load()
+        public AppSettings Load()
         {
             if (!File.Exists(_settingsFilePath))
             {
-                return new Settings();
+                AppSettings defaults = AppSettings.CreateDefault();
+                Save(defaults);
+                return defaults;
             }
 
             try
             {
                 string json = File.ReadAllText(_settingsFilePath);
 
-                Settings? settings = JsonSerializer.Deserialize<Settings>(json, _jsonOptions);
+                AppSettings? appSettings = JsonSerializer.Deserialize<AppSettings>(json, _jsonOptions);
 
-                return settings ?? new Settings();
+                return appSettings ?? AppSettings.CreateDefault();
             }
             catch
             {
-                return new Settings();
+                AppSettings defaults = AppSettings.CreateDefault();
+                Save(defaults);
+                return AppSettings.CreateDefault();
             }
         }
 
-        public void Save(Settings settings)
+        public void Save(AppSettings appSettings)
         {
             Directory.CreateDirectory(_settingsDirectory);
 
-            string json = JsonSerializer.Serialize(settings, _jsonOptions);
+            string json = JsonSerializer.Serialize(appSettings, _jsonOptions);
 
             File.WriteAllText(_settingsFilePath, json);
         }

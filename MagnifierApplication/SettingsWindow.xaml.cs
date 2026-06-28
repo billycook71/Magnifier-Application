@@ -20,13 +20,15 @@ namespace MagnifierApplication
     public partial class SettingsWindow : Window
     {
         private bool _isUpdatingControls;
-        private readonly Settings _settings;
+        private Settings _settings;
+        private readonly AppSettings _appSettings;
         private readonly SettingsStorageService _settingsStorage;
-        public SettingsWindow(Settings settings, SettingsStorageService settingsStorage)
+        public SettingsWindow(AppSettings appSettings, SettingsStorageService settingsStorage)
         {
             InitializeComponent();
 
-            _settings = settings;
+            _appSettings = appSettings;
+            _settings = _appSettings.Profiles[_appSettings.ActiveProfileIndex].Settings;
             _settingsStorage = settingsStorage;
 
             LoadSettingsIntoControls();
@@ -47,6 +49,9 @@ namespace MagnifierApplication
             CaptureOffsetYSlider.Value = _settings.CaptureOffsetY;
             CapturePresetComboBox.SelectedIndex = 5; //Custom for now
 
+            ProfileComboBox.SelectedIndex =
+                _appSettings.ActiveProfileIndex;
+
             ShapeComboBox.SelectedIndex=
                 _settings.Shape == LensShape.Circle ? 0 : 1;
 
@@ -59,7 +64,7 @@ namespace MagnifierApplication
             {
                 _settings.Magnification = MagnificationSlider.Value;
                 UpdateValueLabels();
-                _settingsStorage.Save(_settings);
+                _settingsStorage.Save(_appSettings);
             };
 
 
@@ -67,7 +72,7 @@ namespace MagnifierApplication
             {
                 _settings.LensSize = (int)LensSizeSlider.Value;
                 UpdateValueLabels();
-                _settingsStorage.Save(_settings);
+                _settingsStorage.Save(_appSettings);
             };
 
 
@@ -75,7 +80,7 @@ namespace MagnifierApplication
             {
                 _settings.WindowOffsetX = (int)WindowOffsetXSlider.Value;
                 UpdateValueLabels();
-                _settingsStorage.Save(_settings);
+                _settingsStorage.Save(_appSettings);
             };
 
 
@@ -83,7 +88,7 @@ namespace MagnifierApplication
             {
                 _settings.WindowOffsetY = (int)WindowOffsetYSlider.Value;
                 UpdateValueLabels();
-                _settingsStorage.Save(_settings);
+                _settingsStorage.Save(_appSettings);
             };
                 
 
@@ -95,6 +100,29 @@ namespace MagnifierApplication
                     
                 else
                     _settings.Shape = LensShape.Square;
+
+                _settingsStorage.Save(_appSettings);
+            };
+
+            ProfileComboBox.SelectionChanged += (s, e) =>
+            {
+                if (_isUpdatingControls)
+                    return;
+
+                int selectedIndex = ProfileComboBox.SelectedIndex;
+
+                if (selectedIndex < 0 || selectedIndex >= _appSettings.Profiles.Count)
+                    return;
+
+                _appSettings.ActiveProfileIndex = selectedIndex;
+                _settings = _appSettings.Profiles[selectedIndex].Settings;
+
+                LoadSettingsIntoControls();
+                UpdateValueLabels();
+
+                ActiveProfileChanged?.Invoke(_settings);
+
+                _settingsStorage.Save(_appSettings);
             };
 
             CapturePresetComboBox.SelectionChanged += (s, e) =>
@@ -138,7 +166,7 @@ namespace MagnifierApplication
                 _isUpdatingControls = false;
 
                 UpdateValueLabels();
-                _settingsStorage.Save(_settings);
+                _settingsStorage.Save(_appSettings);
             };
 
             CaptureOffsetXSlider.ValueChanged += (s, e) =>
@@ -149,7 +177,7 @@ namespace MagnifierApplication
                     CapturePresetComboBox.SelectedIndex = 5;
 
                 UpdateValueLabels();
-                _settingsStorage.Save(_settings);
+                _settingsStorage.Save(_appSettings);
             };
 
             CaptureOffsetYSlider.ValueChanged += (s, e) =>
@@ -160,14 +188,14 @@ namespace MagnifierApplication
                     CapturePresetComboBox.SelectedIndex = 5;
 
                 UpdateValueLabels();
-                _settingsStorage.Save(_settings);
+                _settingsStorage.Save(_appSettings);
             };
 
             BorderThicknessSlider.ValueChanged += (s, e) =>
             {
                 _settings.BorderThickness = (int)BorderThicknessSlider.Value;
                 UpdateValueLabels();
-                _settingsStorage.Save(_settings);
+                _settingsStorage.Save(_appSettings);
 
             };
 
@@ -185,5 +213,7 @@ namespace MagnifierApplication
             CaptureOffsetXValueText.Text = $"{_settings.CaptureOffsetX}px";
             CaptureOffsetYValueText.Text = $"{_settings.CaptureOffsetY}px";
         }
+
+        public event Action<Settings>? ActiveProfileChanged;
     }
 }

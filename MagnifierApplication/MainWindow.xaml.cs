@@ -29,6 +29,7 @@ namespace MagnifierApplication
         private HotKeyService? _hotkey;
         private Settings _settings;
         private SettingsStorageService _settingsStorage;
+        private AppSettings _appSettings;
 
         //Determins whether lens is active
         private bool _enabled = true;
@@ -43,7 +44,8 @@ namespace MagnifierApplication
 
             //create one shared settings instance so UI and engine can read from the same configuration
             _settingsStorage = new SettingsStorageService();
-            _settings = _settingsStorage.Load();
+            _appSettings = _settingsStorage.Load();
+            _settings = _appSettings.Profiles[_appSettings.ActiveProfileIndex].Settings;
 
             //set window size from settings
             Width = _settings.LensSize;
@@ -58,7 +60,13 @@ namespace MagnifierApplication
                 );
 
             ////temporary: open settings window automatically while testing
-            var settingsWindow = new SettingsWindow(_settings, _settingsStorage);
+            var settingsWindow = new SettingsWindow(_appSettings, _settingsStorage);
+
+            settingsWindow.ActiveProfileChanged += settings =>
+            {
+                _settings = settings;
+                _engine.Settings = _settings;
+            };
             settingsWindow.Show();
 
             StartLoop();

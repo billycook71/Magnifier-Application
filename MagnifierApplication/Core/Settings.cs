@@ -37,5 +37,10 @@ namespace MagnifierApplication.Core
 
         //Thickness of lens border
         public int BorderThickness { get; set; } = 3;
+
+        public static Settings CreateDefault()
+        {
+            return new Settings();
+        }
     }
 }
