@@ -52,7 +52,7 @@ namespace MagnifierApplication.Core
 
             //Capture the raw screen region, then render at the zoom level from settings
             using var raw = _capture.Capture(region);
-            return _renderer.Render(raw, Settings.LensSize);
+            return _renderer.Render(raw, Settings.LensSize, Settings.RenderingMode);
         }
     }
 }

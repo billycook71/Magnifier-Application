@@ -14,10 +14,20 @@ namespace MagnifierApplication.Core
         Square
     }
 
+    public enum RenderingMode
+    {
+        Sharp,
+        Smooth
+    }
+
     public class Settings
     {
         //set default shape to circle
         public LensShape Shape { get; set; } = LensShape.Circle;
+
+        //Changes rendering target, defaulted to sharp
+        //Toggles different interpolation mode
+        public RenderingMode RenderingMode { get; set; } = RenderingMode.Sharp;
 
         //Magnification of the lens (calculated with capturesize in engine)
         public double Magnification { get; set; } = 2.0;

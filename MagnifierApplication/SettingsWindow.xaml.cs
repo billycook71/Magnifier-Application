@@ -31,6 +31,7 @@ namespace MagnifierApplication
             _settings = _appSettings.Profiles[_appSettings.ActiveProfileIndex].Settings;
             _settingsStorage = settingsStorage;
 
+            RefreshProfileComboBox();
             LoadSettingsIntoControls();
             UpdateValueLabels();
             WireEvents();
@@ -55,11 +56,46 @@ namespace MagnifierApplication
             ShapeComboBox.SelectedIndex=
                 _settings.Shape == LensShape.Circle ? 0 : 1;
 
+            SharpnessComboBox.SelectedIndex =
+                _settings.RenderingMode == RenderingMode.Sharp ? 0 : 1;
+
             _isUpdatingControls = false;
         }
 
         private void WireEvents()
         {
+            RenameProfileButton.Click += (s, e) =>
+            {
+                ProfileNameTextBox.Text =
+                _appSettings.Profiles[_appSettings.ActiveProfileIndex].DisplayName;
+
+                RenameProfilePanel.Visibility = Visibility.Visible;
+                ProfileNameTextBox.Focus();
+                ProfileNameTextBox.SelectAll();
+            };
+
+            CancelProfileNameButton.Click += (s, e) =>
+            {
+                RenameProfilePanel.Visibility = Visibility.Collapsed;
+            };
+
+            SaveProfileNameButton.Click += (s, e) =>
+            {
+                string newName = ProfileNameTextBox.Text.Trim();
+
+                if (string.IsNullOrWhiteSpace(newName))
+                    return;
+
+                _appSettings.Profiles[_appSettings.ActiveProfileIndex].DisplayName = newName;
+
+                RefreshProfileComboBox();
+
+                RenameProfilePanel.Visibility = Visibility.Collapsed;
+
+                _settingsStorage.Save(_appSettings);
+            };
+
+
             MagnificationSlider.ValueChanged += (s, e) =>
             {
                 _settings.Magnification = MagnificationSlider.Value;
@@ -95,11 +131,28 @@ namespace MagnifierApplication
 
             ShapeComboBox.SelectionChanged += (s, e) =>
             {
+                if (_isUpdatingControls)
+                    return;
+
                 if (ShapeComboBox.SelectedIndex == 0)
                     _settings.Shape = LensShape.Circle;
                     
                 else
                     _settings.Shape = LensShape.Square;
+
+                _settingsStorage.Save(_appSettings);
+            };
+
+            SharpnessComboBox.SelectionChanged += (s, e) =>
+            {
+                if (_isUpdatingControls)
+                    return;
+
+                if (SharpnessComboBox.SelectedIndex == 0)
+                    _settings.RenderingMode = RenderingMode.Sharp;
+
+                else
+                    _settings.RenderingMode = RenderingMode.Smooth;
 
                 _settingsStorage.Save(_appSettings);
             };
@@ -212,6 +265,22 @@ namespace MagnifierApplication
 
             CaptureOffsetXValueText.Text = $"{_settings.CaptureOffsetX}px";
             CaptureOffsetYValueText.Text = $"{_settings.CaptureOffsetY}px";
+        }
+
+        private void RefreshProfileComboBox()
+        {
+            _isUpdatingControls = true;
+
+            ProfileComboBox.Items.Clear();
+
+            foreach(var profile in _appSettings.Profiles)
+            {
+                ProfileComboBox.Items.Add(profile.DisplayName);
+            }
+
+            ProfileComboBox.SelectedIndex = _appSettings.ActiveProfileIndex;
+
+            _isUpdatingControls = false;
         }
 
         public event Action<Settings>? ActiveProfileChanged;

@@ -21,7 +21,7 @@ namespace MagnifierApplication
     ///1.Creating shared services/settings
     ///2.Starting the render/update loop
     ///3.Positioning the lens near the cursor
-    ///4. Responding to the global hotkey
+    ///4.Responding to the global hotkey
     public partial class MainWindow : Window
     {
         private MagnifierEngine _engine;

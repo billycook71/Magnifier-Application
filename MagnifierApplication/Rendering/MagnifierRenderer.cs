@@ -1,6 +1,8 @@
-﻿using System;
+﻿using MagnifierApplication.Core;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Interop;
@@ -14,15 +16,19 @@ namespace MagnifierApplication.Rendering
     internal class MagnifierRenderer
     {
         ///Enlarges source image and returns as a bitmap source to be displayed by WPF Image control
-        public BitmapSource Render(Bitmap src, int targetSize)
+        public BitmapSource Render(Bitmap src, int targetSize, RenderingMode renderingMode)
         {
             //cretes a larger bitmap based on the zoom multiplier
-            var rendered = new Bitmap(targetSize, targetSize);
+            using var rendered = new Bitmap(targetSize, targetSize);
 
             using (Graphics g = Graphics.FromImage(rendered))
             {
                 //nearest neighbor keeps edges sharper to avoid blurry text
-                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+                //highest quality bicubic prioritizes smoothness, less accurate, more visual clarity
+                g.InterpolationMode = renderingMode == RenderingMode.Sharp
+                    ? System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor
+                    : System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+
                 //Draw the source bitmap into the larger destination bitmap
                 g.DrawImage(src, 0, 0, targetSize, targetSize);
             }
@@ -30,18 +36,31 @@ namespace MagnifierApplication.Rendering
             return ConvertToBitmapSource(rendered);
         }
 
+        [DllImport("gdi32.dll")]
+        private static extern bool DeleteObject(IntPtr hObject);
+
         ///Converts a System.Drawing.Bitmap into a WPF BitmapSource
         ///WPF and GDI+ use diferent image types, requiring conversion
         private BitmapSource ConvertToBitmapSource(Bitmap bitmap)
         {
-            var hBitmap = bitmap.GetHbitmap();
+            IntPtr hBitmap = bitmap.GetHbitmap();
 
-            return Imaging.CreateBitmapSourceFromHBitmap(
-                hBitmap,
-                IntPtr.Zero,
-                Int32Rect.Empty,
-                BitmapSizeOptions.FromEmptyOptions()
-                );
+            try
+            {
+                BitmapSource source = Imaging.CreateBitmapSourceFromHBitmap(
+                    hBitmap,
+                    IntPtr.Zero,
+                    Int32Rect.Empty,
+                    BitmapSizeOptions.FromEmptyOptions()
+                    );
+
+                source.Freeze();
+                return source;
+            }
+            finally
+            {
+                DeleteObject(hBitmap);
+            }
         }
     }
 }
