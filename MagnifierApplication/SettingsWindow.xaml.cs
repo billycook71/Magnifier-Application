@@ -23,6 +23,7 @@ namespace MagnifierApplication
         private Settings _settings;
         private readonly AppSettings _appSettings;
         private readonly SettingsStorageService _settingsStorage;
+        private readonly StartupService _startupService = new();
         public SettingsWindow(AppSettings appSettings, SettingsStorageService settingsStorage)
         {
             InitializeComponent();
@@ -40,6 +41,9 @@ namespace MagnifierApplication
         private void LoadSettingsIntoControls()
         {
             _isUpdatingControls = true;
+
+            StartHiddenCheckBox.IsChecked = _appSettings.StartHidden;
+            StartWithWindowsCheckBox.IsChecked = _appSettings.StartWithWindows;
 
             MagnificationSlider.Value = _settings.Magnification;
             LensSizeSlider.Value = _settings.LensSize;
@@ -281,6 +285,25 @@ namespace MagnifierApplication
             ProfileComboBox.SelectedIndex = _appSettings.ActiveProfileIndex;
 
             _isUpdatingControls = false;
+        }
+
+        private void StartHiddenCheckBox_Changed(object sender, RoutedEventArgs e)
+        {
+            if (_isUpdatingControls) return;
+
+            _appSettings.StartHidden = StartHiddenCheckBox.IsChecked == true;
+            _settingsStorage.Save(_appSettings);
+        }
+
+        private void StartWithWindowsCheckBox_Changed(object sender, RoutedEventArgs e)
+        {
+            if (_isUpdatingControls) return;
+
+            _appSettings.StartWithWindows = StartWithWindowsCheckBox.IsChecked == true;
+            _startupService.SetStartWithWindows(_appSettings.StartWithWindows);
+            _settingsStorage.Save(_appSettings);
+
+            // Registry wiring comes next.
         }
 
         public event Action<Settings>? ActiveProfileChanged;

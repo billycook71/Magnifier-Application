@@ -7,6 +7,10 @@ namespace MagnifierApplication.Core
     public class AppSettings
     {
         public int ActiveProfileIndex { get; set; } = 0;
+
+        public bool StartHidden { get; set; } = false;
+        public bool StartWithWindows { get; set; } = false;
+
         public List<ProfileSettings> Profiles { get; set; } = new();
 
         public static AppSettings CreateDefault()

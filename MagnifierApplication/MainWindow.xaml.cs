@@ -13,6 +13,12 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using System.IO;
+using System.Linq;
+
+using Forms = System.Windows.Forms;
+using Drawing = System.Drawing;
+using System.ComponentModel;
 
 namespace MagnifierApplication
 {
@@ -32,7 +38,13 @@ namespace MagnifierApplication
         private AppSettings _appSettings;
 
         //Determins whether lens is active
-        private bool _enabled = true;
+        private bool _enabled;
+
+        //tray behavior
+        private Forms.NotifyIcon? _trayIcon;
+        private Forms.ToolStripMenuItem? _toggleMenuItem;
+        private SettingsWindow? _settingsWindow;
+        private bool _isExitRequested;
 
 
         public MainWindow()
@@ -47,6 +59,14 @@ namespace MagnifierApplication
             _appSettings = _settingsStorage.Load();
             _settings = _appSettings.Profiles[_appSettings.ActiveProfileIndex].Settings;
 
+            //conform to app startup settings
+            bool launchedHidden =
+                Environment.GetCommandLineArgs()
+                    .Any(arg => arg.Equals("--hidden", StringComparison.OrdinalIgnoreCase));
+
+            _enabled = !(_appSettings.StartHidden || launchedHidden);
+            Visibility = _enabled ? Visibility.Visible : Visibility.Hidden;
+
             //set window size from settings
             Width = _settings.LensSize;
             Height = _settings.LensSize;
@@ -59,15 +79,13 @@ namespace MagnifierApplication
                 _settings
                 );
 
-            ////temporary: open settings window automatically while testing
-            var settingsWindow = new SettingsWindow(_appSettings, _settingsStorage);
 
-            settingsWindow.ActiveProfileChanged += settings =>
-            {
-                _settings = settings;
-                _engine.Settings = _settings;
-            };
-            settingsWindow.Show();
+            InitializeTrayIcon();
+            UpdateToggleMenuText();
+
+            EnsureWindowHandleCreated();
+            ApplyMagnifierVisibility();
+
 
             StartLoop();
         }
@@ -126,7 +144,15 @@ namespace MagnifierApplication
         private void Toggle()
         {
             _enabled = !_enabled;
-            this.Visibility = _enabled ? Visibility.Visible : Visibility.Hidden;
+            ApplyMagnifierVisibility();
+        }
+
+        private void UpdateToggleMenuText()
+        {
+            if (_toggleMenuItem != null)
+            {
+                _toggleMenuItem.Text = _enabled ? "Hide Magnifier" : "Show Magnifier";
+            }
         }
 
         //Receives native windows messages for this window
@@ -174,6 +200,131 @@ namespace MagnifierApplication
                 CircleBorder.Visibility = Visibility.Collapsed;
                 SquareBorder.Visibility = Visibility.Visible;
             }
+        }
+
+        private void InitializeTrayIcon()
+        {
+            _toggleMenuItem = new Forms.ToolStripMenuItem("Hide Magnifier");
+            _toggleMenuItem.Click += (s, e) => Toggle();
+
+            var settingsMenuItem = new Forms.ToolStripMenuItem("Settings");
+            settingsMenuItem.Click += (s, e) => ShowSettingsWindow();
+
+            var exitMenuItem = new Forms.ToolStripMenuItem("Exit");
+            exitMenuItem.Click += (s, e) => ExitApplication();
+
+            var contextMenu = new Forms.ContextMenuStrip();
+            contextMenu.Items.Add(settingsMenuItem);
+            contextMenu.Items.Add(_toggleMenuItem);
+            contextMenu.Items.Add(new Forms.ToolStripSeparator());
+            contextMenu.Items.Add(exitMenuItem);
+
+            _trayIcon = new Forms.NotifyIcon
+            {
+                Text = "Magnifier Application",
+                Icon = LoadTrayIcon(),
+                ContextMenuStrip = contextMenu,
+                Visible = true
+            };
+
+            _trayIcon.DoubleClick += (s, e) => ShowSettingsWindow();
+        }
+
+        private void ShowSettingsWindow()
+        {
+            if (_settingsWindow != null)
+            {
+                _settingsWindow.Activate();
+                return;
+            }
+
+            _settingsWindow = new SettingsWindow(_appSettings, _settingsStorage);
+
+            _settingsWindow.ActiveProfileChanged += settings =>
+            {
+                _settings = settings;
+                _engine.Settings = _settings;
+            };
+
+            _settingsWindow.Closed += (s, e) =>
+            {
+                _settingsWindow = null;
+            };
+
+            _settingsWindow.Show();
+            _settingsWindow.Activate();
+        }
+
+        private void ExitApplication()
+        {
+            _isExitRequested = true;
+
+            if (_trayIcon != null)
+            {
+                _trayIcon.Visible = false;
+                _trayIcon.Dispose();
+                _trayIcon = null;
+            }
+
+            Close();
+        }
+
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            if( !_isExitRequested)
+            {
+                e.Cancel = true;
+
+                _enabled = false;
+                Visibility = Visibility.Hidden;
+                UpdateToggleMenuText();
+                
+                return;
+            }
+
+            base.OnClosing(e);
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _hotkey?.Unregister();
+
+            if (_trayIcon != null)
+            {
+                _trayIcon.Visible = false;
+                _trayIcon.Dispose();
+                _trayIcon = null;
+            }
+
+            base.OnClosed(e);
+        }
+
+        private void EnsureWindowHandleCreated()
+        {
+            var helper = new WindowInteropHelper(this);
+            helper.EnsureHandle();
+        }
+
+        private void ApplyMagnifierVisibility()
+        {
+            Visibility = _enabled ? Visibility.Visible : Visibility.Hidden;
+            UpdateToggleMenuText();
+        }
+
+        private Drawing.Icon LoadTrayIcon()
+        {
+            string iconPath = System.IO.Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                "Assets",
+                "MagnifierApplication.ico"
+            );
+
+            if (File.Exists(iconPath))
+            {
+                return new Drawing.Icon(iconPath);
+            }
+
+            return Drawing.SystemIcons.Application;
         }
     }
 }

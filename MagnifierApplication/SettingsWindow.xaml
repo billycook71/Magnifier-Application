@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:MagnifierApplication"
         mc:Ignorable="d"
         Title="Magnifier Settings"
+        Icon="/Assets/MagnifierApplication.ico"
         Height="720"
         Width="900"
         Background="#DCE6F2">
@@ -224,13 +225,19 @@
                         </Grid>
 
                         <CheckBox Name="StartWithWindowsCheckBox"
-                                  Content="Start with Windows"/>
-
-                        <CheckBox Name="MinimizeToTrayCheckBox"
-                                  Content="Minimize to tray when closed"/>
+                                  Content="Start with Windows"
+                                  Checked="StartWithWindowsCheckBox_Changed"
+                                  Unchecked="StartWithWindowsCheckBox_Changed"/>
 
                         <CheckBox Name="StartHiddenCheckBox"
-                                  Content="Start hidden"/>
+                                  Content="Start hidden"
+                                  Checked="StartHiddenCheckBox_Changed"
+                                  Unchecked="StartHiddenCheckBox_Changed"/>
+
+                        <TextBlock Text="Tip: Use Ctrl + M anytime to show or hide the magnifier lens."
+                                   Opacity="0.75"
+                                   TextWrapping="Wrap"
+                                   Margin="0,6,0,0"/>
                     </StackPanel>
                 </Border>
 

@@ -7,9 +7,18 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
 	<UseWindowsForms>true</UseWindowsForms>
+	  <ApplicationIcon>Assets\MagnifierApplication.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
+	  <None Remove="Assets\MagnifierApplication.ico"/>
+
+	  <Resource Include="Assets\MagnifierApplication.ico"/>
+
+	  <Content Include="Assets\MagnifierApplication.ico">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	  
     <Folder Include="UI\" />
   </ItemGroup>
 

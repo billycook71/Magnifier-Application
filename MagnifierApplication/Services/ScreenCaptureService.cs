@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
+using System.ComponentModel;
 
 namespace MagnifierApplication.Services
 {
@@ -45,13 +46,33 @@ namespace MagnifierApplication.Services
             //Create a bitmap large enough to hold the requested screen region
             Bitmap bmp = new Bitmap(width, height);
 
-            //Draw the screen pixels into the bitmap
-            using (Graphics g = Graphics.FromImage(bmp))
+            try
             {
-                g.CopyFromScreen(x, y, 0, 0, new Size(width, height));
+                //Draw the screen pixels into the bitmap
+                using (Graphics g = Graphics.FromImage(bmp))
+                {
+                    g.CopyFromScreen(x, y, 0, 0, new Size(width, height));
+                }
+
+                return bmp;
+            }
+            catch (Win32Exception)
+            {
+                bmp.Dispose();
+                return CreateFallbackBitmap(width, height);
+            }
+        }
+
+        private Bitmap CreateFallbackBitmap(int width, int height)
+        {
+            Bitmap fallback = new Bitmap(width, height);
+
+            using (Graphics g = Graphics.FromImage(fallback))
+            {
+                g.Clear(Color.Black);
             }
 
-            return bmp;
+            return fallback;
         }
     }
 }
