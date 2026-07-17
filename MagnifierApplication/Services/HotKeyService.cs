@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace MagnifierApplication.Services
 {
-    ///Registers and handles a global hotkey through the Windows API
-    ///Currently hardcoded to CTRL+M but will be changeable through the GUI
+    ///Registers and handles a global hotkey through the Windows API that toggles the magnifier lense
     internal class HotKeyService
     {
         private const int HOTKEY_ID = 9000;
@@ -19,7 +16,6 @@ namespace MagnifierApplication.Services
         private readonly IntPtr _handle;
 
         //Raised when the registered hotkey is pressed.
-        //MainWindow uses this to toggle the magnifier
         public event Action? onHotkeyPressed;
 
         public HotKeyService(IntPtr handle)
@@ -27,18 +23,19 @@ namespace MagnifierApplication.Services
             _handle = handle;
         }
 
-        //Registers the hotkey, default (hardcoded)
+        //Registers the hotkey
         public void Register()
         {
             RegisterHotKey(_handle, HOTKEY_ID, MOD_CONTROL, VK_M); // Ctrl + M
         }
 
+        //Releases the global hotkey registration during app shutdown
         public void Unregister()
         {
             UnregisterHotKey(_handle, HOTKEY_ID);
         }
 
-        //Called from the window message loop
+        //Called from the MainWindow's native message hook
         //If the incoming message is from our hotkey, trigger event
         public void ProcessMessage(int msg, IntPtr wParam)
         {
@@ -48,12 +45,10 @@ namespace MagnifierApplication.Services
             }
         }
 
-        //Native Windows API function that registers a global hotkey
         [DllImport("user32.dll")]
         private static extern bool RegisterHotKey(
             IntPtr hWnd, int id, int fsModifiers, int vk);
 
-        //Native Windows API function to unregister a global hotkey
         [DllImport("user32.dll")]
         private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 

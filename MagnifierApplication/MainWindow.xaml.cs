@@ -1,33 +1,19 @@
 ﻿using MagnifierApplication.Core;
 using MagnifierApplication.Services;
-using System.Text;
-using System.Runtime.InteropServices;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 using System.IO;
 using System.Linq;
 
 using Forms = System.Windows.Forms;
 using Drawing = System.Drawing;
-using System.ComponentModel;
 
 namespace MagnifierApplication
 {
-    ///Main overlay window for the magnifier
-    ///This class is responsible for
-    ///1.Creating shared services/settings
-    ///2.Starting the render/update loop
-    ///3.Positioning the lens near the cursor
-    ///4.Responding to the global hotkey
+    ///Coordinates the magnifier overlay, rendering loop, global hotkey,
+    ///settings window, tray behavior, and applicaion lifecycle.
     public partial class MainWindow : Window
     {
         private MagnifierEngine _engine;
@@ -37,10 +23,10 @@ namespace MagnifierApplication
         private SettingsStorageService _settingsStorage;
         private AppSettings _appSettings;
 
-        //Determins whether lens is active
+        //Current runtime state of the magnifier lens.
         private bool _enabled;
 
-        //tray behavior
+        //Tray UI and applicaion-lifecycle state.
         private Forms.NotifyIcon? _trayIcon;
         private Forms.ToolStripMenuItem? _toggleMenuItem;
         private SettingsWindow? _settingsWindow;
@@ -51,27 +37,29 @@ namespace MagnifierApplication
         {
             InitializeComponent();
 
-            //Shared between window and engine
+            //Shared cursor service used by both positioning and frame capture.
             _cursor = new CursorService();
 
-            //create one shared settings instance so UI and engine can read from the same configuration
+            //Load one shared settings graph so the engine and settings window
+            //operate on the same in-memory configuration.
             _settingsStorage = new SettingsStorageService();
             _appSettings = _settingsStorage.Load();
             _settings = _appSettings.Profiles[_appSettings.ActiveProfileIndex].Settings;
 
-            //conform to app startup settings
+            //Windows startup uses --hidden so the utility launches quietly in the tray.
             bool launchedHidden =
                 Environment.GetCommandLineArgs()
                     .Any(arg => arg.Equals("--hidden", StringComparison.OrdinalIgnoreCase));
 
+            //Respect the user's normal startup preference and force hidden launches.
             _enabled = !(_appSettings.StartHidden || launchedHidden);
             Visibility = _enabled ? Visibility.Visible : Visibility.Hidden;
 
-            //set window size from settings
+            //Initialize the lens using the active profile.
             Width = _settings.LensSize;
             Height = _settings.LensSize;
 
-            //build the magnifier pipeline
+            //Build the screen capture and rendering pipeline.
             _engine = new MagnifierEngine(
                 _cursor,
                 new ScreenCaptureService(),
@@ -90,8 +78,8 @@ namespace MagnifierApplication
             StartLoop();
         }
 
-        ///Called after the WPF window has a real native window handle
-        ///This is the time to register hooks and hotkeys tied to the handle
+        ///Attaches the native Windows message hook and registers the global
+        ///hotkey after WPF creates the window handle.
         protected override void OnSourceInitialized(EventArgs e)
         {
             base.OnSourceInitialized(e);
@@ -99,17 +87,17 @@ namespace MagnifierApplication
             var helper = new WindowInteropHelper(this);
             var source = HwndSource.FromHwnd(helper.Handle);
 
-            //Attach a custom messsage handler so we can recieve WM_HOTKEY messages
+            //Attach a native message hook so WM_HOTKEY message reach the service.
             source.AddHook(WndProc);
 
-            //Register the global hotkey for toggling the magnifier
+            //Register Ctrl+M against the window handle.
             _hotkey = new HotKeyService(helper.Handle);
             _hotkey.onHotkeyPressed += Toggle;
             _hotkey.Register();
         }
 
-        ///Starts the timer-based update loop
-        ///Each tick creates a new frame, places it in the lens, moves the window near the curosr
+        ///Starts the timer-driven rendering loop. When the lens is enabled,
+        ///each tick captures a frame, updates the overlay, and follows the cursor.
         private void StartLoop()
         {
             var timer = new DispatcherTimer
@@ -119,6 +107,7 @@ namespace MagnifierApplication
 
             timer.Tick += (s, e) =>
             {
+                //Skip capture and rendering entirely while the lens is hidden.
                 if (!_enabled) return;
 
                 UpdateLensVisuals();
@@ -130,23 +119,23 @@ namespace MagnifierApplication
             timer.Start();
         }
 
-        ///Moves the magnifier window near the cursor
-        ///Window offset from settings determines where the lens appears on the screen
+        ///Positions the lens relative to the cursor using the active profile offsets.
         private void UpdatePosition()
         {
             var pos = _cursor.GetPosition();
 
-            this.Left = pos.X + _settings.WindowOffsetX;
-            this.Top = pos.Y + _settings.WindowOffsetY;
+            Left = pos.X + _settings.WindowOffsetX;
+            Top = pos.Y + _settings.WindowOffsetY;
         }
 
-        //Toggles the magnifier on and off
+        //Toggles the current lens state through the shared visibility path.
         private void Toggle()
         {
             _enabled = !_enabled;
             ApplyMagnifierVisibility();
         }
 
+        //Keeps the tray action label synchronized with the lens state.
         private void UpdateToggleMenuText()
         {
             if (_toggleMenuItem != null)
@@ -155,8 +144,7 @@ namespace MagnifierApplication
             }
         }
 
-        //Receives native windows messages for this window
-        //Forwards relevant messages to the hotkey service
+        //Forwards native window messages to the hotkey service.
         private IntPtr WndProc(
             IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
@@ -164,13 +152,16 @@ namespace MagnifierApplication
             return IntPtr.Zero;
         }
 
-        //Updates lens size/shape in real-time
+        //Applies the active profile's lens size, border thickness, and shape
+        //to the transparent overlay.
         private void UpdateLensVisuals()
         {
-            int shadowPadding = 24;
+            //Extra transparent space prevents the drop shadow from being clipped.
+            const int shadowPadding = 24;
 
+            //Resize the overlay and visible lens elements.
             Width = _settings.LensSize + shadowPadding;
-            Height = _settings.LensSize+ shadowPadding;
+            Height = _settings.LensSize + shadowPadding;
 
             MagnifierImage.Width = _settings.LensSize;
             MagnifierImage.Height = _settings.LensSize;
@@ -183,7 +174,7 @@ namespace MagnifierApplication
             SquareBorder.Height = _settings.LensSize;
             SquareBorder.BorderThickness = new Thickness(_settings.BorderThickness);
 
-
+            //Apply shape-specific clipping and border visibility.
             if (_settings.Shape == LensShape.Circle)
             {
                 MagnifierImage.Clip = new EllipseGeometry(
@@ -202,6 +193,7 @@ namespace MagnifierApplication
             }
         }
 
+        //Creates the system-tray icon and its Settings, Show/Hide, and Exit actions.
         private void InitializeTrayIcon()
         {
             _toggleMenuItem = new Forms.ToolStripMenuItem("Hide Magnifier");
@@ -230,6 +222,7 @@ namespace MagnifierApplication
             _trayIcon.DoubleClick += (s, e) => ShowSettingsWindow();
         }
 
+        //Opens the settings window or focuses the existing instance if already open.
         private void ShowSettingsWindow()
         {
             if (_settingsWindow != null)
@@ -240,6 +233,7 @@ namespace MagnifierApplication
 
             _settingsWindow = new SettingsWindow(_appSettings, _settingsStorage);
 
+            //Keep the overlay and rendering engine synchronized with the profile changes.
             _settingsWindow.ActiveProfileChanged += settings =>
             {
                 _settings = settings;
@@ -255,8 +249,10 @@ namespace MagnifierApplication
             _settingsWindow.Activate();
         }
 
+        //Performs the explicit tray-menu shutdown path.
         private void ExitApplication()
         {
+            //Allow OnClosing to distinguish an intentional exit from hide-to-tray behavior.
             _isExitRequested = true;
 
             if (_trayIcon != null)
@@ -268,10 +264,12 @@ namespace MagnifierApplication
 
             Close();
         }
-
+        
+        //Converts normal window closure into hide-to-tray behavior unless
+        //the user explicitly selected Exit.
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
-            if( !_isExitRequested)
+            if (!_isExitRequested)
             {
                 e.Cancel = true;
 
@@ -285,6 +283,7 @@ namespace MagnifierApplication
             base.OnClosing(e);
         }
 
+        //Release the operating-system resources after the application fully closes.
         protected override void OnClosed(EventArgs e)
         {
             _hotkey?.Unregister();
@@ -299,21 +298,26 @@ namespace MagnifierApplication
             base.OnClosed(e);
         }
 
+        //Forces creation of the native window handle so the global hotkey can
+        //register even when the overlay starts hidden.
         private void EnsureWindowHandleCreated()
         {
             var helper = new WindowInteropHelper(this);
             helper.EnsureHandle();
         }
 
+        //Applies the current lens state to both the overlay and tray menu.
         private void ApplyMagnifierVisibility()
         {
             Visibility = _enabled ? Visibility.Visible : Visibility.Hidden;
             UpdateToggleMenuText();
         }
 
+        //Loads the packaged tray icon, falling back to the Windows applicaiton
+        //icon if the asset cannot be found.
         private Drawing.Icon LoadTrayIcon()
         {
-            string iconPath = System.IO.Path.Combine(
+            string iconPath = Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory,
                 "Assets",
                 "MagnifierApplication.ico"

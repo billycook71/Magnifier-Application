@@ -4,6 +4,7 @@ using System.Text;
 
 namespace MagnifierApplication.Core
 {
+    //Represents a named magnifier profile and its associated settings.
     public class ProfileSettings
     {
         public string DisplayName { get; set; }

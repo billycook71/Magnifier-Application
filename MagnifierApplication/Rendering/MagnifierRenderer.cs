@@ -1,35 +1,33 @@
 ﻿using MagnifierApplication.Core;
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Windows;
 using System.Windows.Interop;
-using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 
 namespace MagnifierApplication.Rendering
 {
-    ///Responsible for taking a captured bitmap and enlarging it,
-    ///converting it into a WPF-compatible image source
+    ///Scales captured screen images and converts them into WPF-compatible
+    ///BitmapSource objects for display in the magnifier lens.
     internal class MagnifierRenderer
     {
-        ///Enlarges source image and returns as a bitmap source to be displayed by WPF Image control
+        ///Scales the captured bitmap to the configured lens size using
+        ///the selected rendering mode
         public BitmapSource Render(Bitmap src, int targetSize, RenderingMode renderingMode)
         {
-            //cretes a larger bitmap based on the zoom multiplier
+            //Create the destination bitmap at the configured lens size.
             using var rendered = new Bitmap(targetSize, targetSize);
 
             using (Graphics g = Graphics.FromImage(rendered))
             {
-                //nearest neighbor keeps edges sharper to avoid blurry text
-                //highest quality bicubic prioritizes smoothness, less accurate, more visual clarity
+                //Nearest neighbor preserves sharp pixel and text edges.
+                //Bicubic interpolatrion produces a smoother result.
                 g.InterpolationMode = renderingMode == RenderingMode.Sharp
                     ? System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor
                     : System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
 
-                //Draw the source bitmap into the larger destination bitmap
+                //Scale the captured image into the destination bitmap.
                 g.DrawImage(src, 0, 0, targetSize, targetSize);
             }
 
@@ -39,8 +37,8 @@ namespace MagnifierApplication.Rendering
         [DllImport("gdi32.dll")]
         private static extern bool DeleteObject(IntPtr hObject);
 
-        ///Converts a System.Drawing.Bitmap into a WPF BitmapSource
-        ///WPF and GDI+ use diferent image types, requiring conversion
+        ///Converts a GDI+ bitmap into a WPF BitmapSource and releases
+        ///temporary native bitmap handle after conversion.
         private BitmapSource ConvertToBitmapSource(Bitmap bitmap)
         {
             IntPtr hBitmap = bitmap.GetHbitmap();

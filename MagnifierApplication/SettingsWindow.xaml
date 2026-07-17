@@ -7,6 +7,7 @@
         mc:Ignorable="d"
         Title="Magnifier Settings"
         Icon="/Assets/MagnifierApplication.ico"
+        WindowStartupLocation="CenterScreen"
         Height="720"
         Width="900"
         Background="#DCE6F2">
@@ -72,6 +73,11 @@
 
     </Window.Resources>
 
+    <!--
+            Scrollable two-column settings layout.
+            Each card groups related magnifier or application options.
+    -->
+    
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <Grid Margin="24">
             <Grid.ColumnDefinitions>
@@ -237,7 +243,7 @@
                         <TextBlock Text="Tip: Use Ctrl + M anytime to show or hide the magnifier lens."
                                    Opacity="0.75"
                                    TextWrapping="Wrap"
-                                   Margin="0,6,0,0"/>
+                                   Margin="0,20,0,0"/>
                     </StackPanel>
                 </Border>
 
@@ -275,7 +281,7 @@
                         </Grid>
 
                         <Slider Name="MagnificationSlider"
-                                Minimum="1"
+                                Minimum="2"
                                 Maximum="6"
                                 TickFrequency="0.5"
                                 IsSnapToTickEnabled="True"
@@ -331,6 +337,11 @@
                         <Slider Name="WindowOffsetYSlider"
                                 Minimum="-300"
                                 Maximum="300"/>
+
+                        <TextBlock Text="Tip: Increase lens offset if the lens appears inside itself."
+                                   Opacity="0.75"
+                                   TextWrapping="Wrap"
+                                   Margin="0,4,0,0"/>
                     </StackPanel>
                 </Border>
 
@@ -360,7 +371,7 @@
                             <ComboBoxItem Content="Custom"/>
                         </ComboBox>
 
-                        <Grid Margin="0,18,0,0">
+                        <Grid Margin="0,6,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
@@ -368,7 +379,7 @@
                             <TextBlock Text="Capture Offset X"/>
                             <TextBlock Name="CaptureOffsetXValueText"
                                        Grid.Column="1"
-                                       Text="-50px"
+                                       Text="-40px"
                                        Style="{StaticResource ValuePill}"/>
                         </Grid>
 
@@ -384,7 +395,7 @@
                             <TextBlock Text="Capture Offset Y"/>
                             <TextBlock Name="CaptureOffsetYValueText"
                                        Grid.Column="1"
-                                       Text="-50px"
+                                       Text="-40px"
                                        Style="{StaticResource ValuePill}"/>
                         </Grid>
 

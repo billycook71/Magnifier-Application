@@ -1,29 +1,29 @@
 ﻿using MagnifierApplication.Core;
 using MagnifierApplication.Services;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace MagnifierApplication
 {
-    /// <summary>
-    /// Interaction logic for SettingsWindow.xaml
-    /// </summary>
+    ///Manages the settings interface, synchronizes controls with the active
+    ///profile, applies capture presets, and persists configuration changes.
     public partial class SettingsWindow : Window
     {
+        //prevents programmatic control updates from being treated as user input
         private bool _isUpdatingControls;
+
+        //Work directly with the active profile's shared Settings instance.
         private Settings _settings;
         private readonly AppSettings _appSettings;
         private readonly SettingsStorageService _settingsStorage;
+
         private readonly StartupService _startupService = new();
+
+        private readonly DispatcherTimer _saveDebounceTimer;
+
+        private const int CustomCapturePresetIndex = 5;
+
         public SettingsWindow(AppSettings appSettings, SettingsStorageService settingsStorage)
         {
             InitializeComponent();
@@ -32,12 +32,26 @@ namespace MagnifierApplication
             _settings = _appSettings.Profiles[_appSettings.ActiveProfileIndex].Settings;
             _settingsStorage = settingsStorage;
 
+            //Restarted after each change so rapid slider movement produces one disk write.
+            _saveDebounceTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(1)
+            };
+
+            _saveDebounceTimer.Tick += (s, e) =>
+            {
+                _saveDebounceTimer.Stop();
+                _settingsStorage.Save(_appSettings);
+            };
+
             RefreshProfileComboBox();
             LoadSettingsIntoControls();
             UpdateValueLabels();
             WireEvents();
         }
 
+        ///Populates the settings controls from the active profile and global options
+        ///without treating those assignments as user changes.
         private void LoadSettingsIntoControls()
         {
             _isUpdatingControls = true;
@@ -52,12 +66,12 @@ namespace MagnifierApplication
             BorderThicknessSlider.Value = _settings.BorderThickness;
             CaptureOffsetXSlider.Value = _settings.CaptureOffsetX;
             CaptureOffsetYSlider.Value = _settings.CaptureOffsetY;
-            CapturePresetComboBox.SelectedIndex = 5; //Custom for now
+            CapturePresetComboBox.SelectedIndex = _settings.CapturePresetIndex;
 
             ProfileComboBox.SelectedIndex =
                 _appSettings.ActiveProfileIndex;
 
-            ShapeComboBox.SelectedIndex=
+            ShapeComboBox.SelectedIndex =
                 _settings.Shape == LensShape.Circle ? 0 : 1;
 
             SharpnessComboBox.SelectedIndex =
@@ -71,7 +85,7 @@ namespace MagnifierApplication
             RenameProfileButton.Click += (s, e) =>
             {
                 ProfileNameTextBox.Text =
-                _appSettings.Profiles[_appSettings.ActiveProfileIndex].DisplayName;
+                    _appSettings.Profiles[_appSettings.ActiveProfileIndex].DisplayName;
 
                 RenameProfilePanel.Visibility = Visibility.Visible;
                 ProfileNameTextBox.Focus();
@@ -96,23 +110,39 @@ namespace MagnifierApplication
 
                 RenameProfilePanel.Visibility = Visibility.Collapsed;
 
-                _settingsStorage.Save(_appSettings);
+                QueueSettingsSave();
             };
 
 
             MagnificationSlider.ValueChanged += (s, e) =>
             {
                 _settings.Magnification = MagnificationSlider.Value;
+                
+                //Preset offsets scale with the capture region, which changes with zoom.
+                if(_settings.CapturePresetIndex != CustomCapturePresetIndex)
+                {
+                    ApplySelectedCapturePreset();
+                    UpdateCaptureOffsetControls();
+                }
+
                 UpdateValueLabels();
-                _settingsStorage.Save(_appSettings);
+                QueueSettingsSave();
             };
 
 
             LensSizeSlider.ValueChanged += (s, e) =>
             {
                 _settings.LensSize = (int)LensSizeSlider.Value;
+
+                //Preset offsets scale with the capture region, which changes with zoom.
+                if(_settings.CapturePresetIndex != CustomCapturePresetIndex)
+                {
+                    ApplySelectedCapturePreset();
+                    UpdateCaptureOffsetControls();
+                }
+                
                 UpdateValueLabels();
-                _settingsStorage.Save(_appSettings);
+                QueueSettingsSave();
             };
 
 
@@ -120,7 +150,7 @@ namespace MagnifierApplication
             {
                 _settings.WindowOffsetX = (int)WindowOffsetXSlider.Value;
                 UpdateValueLabels();
-                _settingsStorage.Save(_appSettings);
+                QueueSettingsSave();
             };
 
 
@@ -128,7 +158,7 @@ namespace MagnifierApplication
             {
                 _settings.WindowOffsetY = (int)WindowOffsetYSlider.Value;
                 UpdateValueLabels();
-                _settingsStorage.Save(_appSettings);
+                QueueSettingsSave();
             };
                 
 
@@ -144,7 +174,7 @@ namespace MagnifierApplication
                 else
                     _settings.Shape = LensShape.Square;
 
-                _settingsStorage.Save(_appSettings);
+                QueueSettingsSave();
             };
 
             SharpnessComboBox.SelectionChanged += (s, e) =>
@@ -158,7 +188,7 @@ namespace MagnifierApplication
                 else
                     _settings.RenderingMode = RenderingMode.Smooth;
 
-                _settingsStorage.Save(_appSettings);
+                QueueSettingsSave();
             };
 
             ProfileComboBox.SelectionChanged += (s, e) =>
@@ -179,51 +209,32 @@ namespace MagnifierApplication
 
                 ActiveProfileChanged?.Invoke(_settings);
 
-                _settingsStorage.Save(_appSettings);
+                QueueSettingsSave();
             };
 
             CapturePresetComboBox.SelectionChanged += (s, e) =>
             {
-                switch (CapturePresetComboBox.SelectedIndex)
+                if (_isUpdatingControls)
+                    return;
+
+                int selectedIndex = CapturePresetComboBox.SelectedIndex;
+
+                if (selectedIndex < 0)
+                    return;
+
+                _settings.CapturePresetIndex = selectedIndex;
+
+                if(selectedIndex == CustomCapturePresetIndex)
                 {
-                    case 0: //centered
-                        _settings.CaptureOffsetX = -50;
-                        _settings.CaptureOffsetY = -50;
-                        break;
-
-                    case 1: //Above
-                        _settings.CaptureOffsetX = -50;
-                        _settings.CaptureOffsetY = -100;
-                        break;
-
-                    case 2: //Below
-                        _settings.CaptureOffsetX = -50;
-                        _settings.CaptureOffsetY = 0;
-                        break;
-
-                    case 3: //Left
-                        _settings.CaptureOffsetX = -100;
-                        _settings.CaptureOffsetY = -50;
-                        break;
-
-                    case 4: //Right
-                        _settings.CaptureOffsetX = 0;
-                        _settings.CaptureOffsetY = -50;
-                        break;
-
-                    case 5: //Custom
-                        return;
+                    QueueSettingsSave();
+                    return;
                 }
 
-                _isUpdatingControls = true;
-
-                CaptureOffsetXSlider.Value = _settings.CaptureOffsetX;
-                CaptureOffsetYSlider.Value = _settings.CaptureOffsetY;
-
-                _isUpdatingControls = false;
-
+                ApplySelectedCapturePreset();
+                UpdateCaptureOffsetControls();
                 UpdateValueLabels();
-                _settingsStorage.Save(_appSettings);
+
+                QueueSettingsSave();
             };
 
             CaptureOffsetXSlider.ValueChanged += (s, e) =>
@@ -231,10 +242,16 @@ namespace MagnifierApplication
                 _settings.CaptureOffsetX = (int)CaptureOffsetXSlider.Value;
 
                 if (!_isUpdatingControls)
-                    CapturePresetComboBox.SelectedIndex = 5;
+                {
+                    _settings.CapturePresetIndex = CustomCapturePresetIndex;
+
+                    _isUpdatingControls = true;
+                    CapturePresetComboBox.SelectedIndex = CustomCapturePresetIndex;
+                    _isUpdatingControls = false;
+                } 
 
                 UpdateValueLabels();
-                _settingsStorage.Save(_appSettings);
+                QueueSettingsSave();
             };
 
             CaptureOffsetYSlider.ValueChanged += (s, e) =>
@@ -242,22 +259,30 @@ namespace MagnifierApplication
                 _settings.CaptureOffsetY = (int)CaptureOffsetYSlider.Value;
 
                 if (!_isUpdatingControls)
-                    CapturePresetComboBox.SelectedIndex = 5;
+                {
+                    _settings.CapturePresetIndex = CustomCapturePresetIndex;
+
+                    _isUpdatingControls= true;
+                    CapturePresetComboBox.SelectedIndex = CustomCapturePresetIndex;
+                    _isUpdatingControls = false;
+                }
+                    
 
                 UpdateValueLabels();
-                _settingsStorage.Save(_appSettings);
+                QueueSettingsSave();
             };
 
             BorderThicknessSlider.ValueChanged += (s, e) =>
             {
                 _settings.BorderThickness = (int)BorderThicknessSlider.Value;
                 UpdateValueLabels();
-                _settingsStorage.Save(_appSettings);
+                QueueSettingsSave();
 
             };
 
         }
 
+        //Refreshes the displayed values beside each numeric control.
         private void UpdateValueLabels()
         {
             MagnificationValueText.Text = $"{_settings.Magnification:0.0}x";
@@ -271,6 +296,7 @@ namespace MagnifierApplication
             CaptureOffsetYValueText.Text = $"{_settings.CaptureOffsetY}px";
         }
 
+        //Rebuilds the profile list and restores the active selection.
         private void RefreshProfileComboBox()
         {
             _isUpdatingControls = true;
@@ -289,7 +315,8 @@ namespace MagnifierApplication
 
         private void StartHiddenCheckBox_Changed(object sender, RoutedEventArgs e)
         {
-            if (_isUpdatingControls) return;
+            if (_isUpdatingControls) 
+                return;
 
             _appSettings.StartHidden = StartHiddenCheckBox.IsChecked == true;
             _settingsStorage.Save(_appSettings);
@@ -297,15 +324,83 @@ namespace MagnifierApplication
 
         private void StartWithWindowsCheckBox_Changed(object sender, RoutedEventArgs e)
         {
-            if (_isUpdatingControls) return;
+            if (_isUpdatingControls) 
+                return;
 
             _appSettings.StartWithWindows = StartWithWindowsCheckBox.IsChecked == true;
             _startupService.SetStartWithWindows(_appSettings.StartWithWindows);
             _settingsStorage.Save(_appSettings);
-
-            // Registry wiring comes next.
         }
 
+        //Calculates capture offsets for the selected preset using the current
+        //lens size and magnification.
+        private void ApplySelectedCapturePreset()
+        {
+            //The source region shrinks as magnification increases, so preset
+            //offsets must be based on the current capture dimensions.
+            int captureSize = Math.Max(
+                1,
+                (int)Math.Round(_settings.LensSize / _settings.Magnification)
+                );
+
+            int halfCaptureSize = captureSize / 2;
+
+            switch (_settings.CapturePresetIndex)
+            {
+                case 0: //Centered on Cursor
+                    _settings.CaptureOffsetX = -halfCaptureSize;
+                    _settings.CaptureOffsetY = -halfCaptureSize;
+                    break;
+
+                case 1: //Above Cursor
+                    _settings.CaptureOffsetX = -halfCaptureSize;
+                    _settings.CaptureOffsetY = -captureSize;
+                    break;
+
+                case 2: //Below Cursor
+                    _settings.CaptureOffsetX = -halfCaptureSize;
+                    _settings.CaptureOffsetY = 0;
+                    break;
+
+                case 3: //Left of Cursor
+                    _settings.CaptureOffsetX = -captureSize;
+                    _settings.CaptureOffsetY = -halfCaptureSize;
+                    break;
+
+                case 4: //Right of Cursor
+                    _settings.CaptureOffsetX = 0;
+                    _settings.CaptureOffsetY = -halfCaptureSize;
+                    break;
+
+                case CustomCapturePresetIndex:
+                    return;
+            }
+        }
+
+        //Synchronizes the capture-offset sliders after a preset recalculates them.
+        private void UpdateCaptureOffsetControls()
+        {
+            _isUpdatingControls = true;
+
+            CaptureOffsetXSlider.Value = _settings.CaptureOffsetX;
+            CaptureOffsetYSlider.Value = _settings.CaptureOffsetY;
+
+            _isUpdatingControls = false;
+        }
+
+        //Restarts the save timere so rapid control changes are persisted as a
+        //single settings write after input settles.
+        private void QueueSettingsSave()
+        {
+            if (_isUpdatingControls)
+                return;
+
+            _saveDebounceTimer.Stop();
+            _saveDebounceTimer.Start();
+        }
+
+        //Raised when the active profile changes so the magnifier engine
+        //can begin using the newly selected Settings instance.
         public event Action<Settings>? ActiveProfileChanged;
     }
 }

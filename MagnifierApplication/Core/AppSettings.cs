@@ -4,6 +4,10 @@ using System.Text;
 
 namespace MagnifierApplication.Core
 {
+/// Stores application-wide configuration that is independent of any
+/// individual magnifier profile. This includes global startup behavior,
+/// the active profile selection, and the collection of available profiles.
+
     public class AppSettings
     {
         public int ActiveProfileIndex { get; set; } = 0;

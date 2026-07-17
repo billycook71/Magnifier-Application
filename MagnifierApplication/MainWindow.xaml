@@ -18,11 +18,14 @@
     IsHitTestVisible="False">
 
     <!--
-    This window is the visual magnifier lens. The window itself is transparent,
-    the window inside is clipped into a circular shape, creating the magnifying lens effect.
+            Transparent overlay window used as the magnifier lens.
+    
+            The captured screen image is displayed inside the image control,
+            while the circular or square border creates the lens appearance.
     -->
     
     <Grid Margin="12">
+        <!--Displays the magnified screen capture. -->
         <Image Name="MagnifierImage" Stretch="Fill"/>
 
         <Ellipse Name="CircleBorder"
@@ -49,5 +52,6 @@
                                   Opacity="0.5"/>
             </Border.Effect>
         </Border>
+        
     </Grid>
 </Window>

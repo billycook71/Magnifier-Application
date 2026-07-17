@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 
 
-///Used to store values that control how the magnifier behaves.
-///Later, these will be adjusted through a GUI window as opposed to being hardcoded.
+///Defines the per-profile settings that control the magnifier's
+///appearance, positioning, and rendering behavior.
 
 namespace MagnifierApplication.Core
 {
@@ -21,33 +21,48 @@ namespace MagnifierApplication.Core
     }
 
     public class Settings
-    {
-        //set default shape to circle
+    {   
+    //Appearance
+
+        //Shape of magnifier lens.
         public LensShape Shape { get; set; } = LensShape.Circle;
 
-        //Changes rendering target, defaulted to sharp
-        //Toggles different interpolation mode
+        //Diameter of the magnifier lens in pixels.
+        public int LensSize { get; set; } = 200;
+
+        //Thickness of lens border in pixels.
+        public int BorderThickness { get; set; } = 3;
+
+
+    //Rendering
+
+        //Rendering mode used when scaling the captured image.
         public RenderingMode RenderingMode { get; set; } = RenderingMode.Sharp;
 
-        //Magnification of the lens (calculated with capturesize in engine)
+        //Zoom level applied ot the captured screen region.
         public double Magnification { get; set; } = 2.0;
 
-        //How much to offset the captured region in relevance to the cursor
-        //Affects what the lense shows
+
+    //Capture
+
+        //Offsets the captured screen region relative to the cursor
         public int CaptureOffsetX { get; set; } = -40;
         public int CaptureOffsetY { get; set; } = -40;
 
-        //Offset the magnifier relevant to the cursor
-        //Determines where the lense appears on the screen
+        //Selected capture preset. Custom is represented by index 5.
+        public int CapturePresetIndex { get; set; } = 5;
+
+
+    //Window
+
+        //Position the magnifier window relative to the cursor
         public int WindowOffsetX { get; set; } = 140;
         public int WindowOffsetY { get; set; } = 40;
 
-        //Diameter of the lens
-        public int LensSize { get; set; } = 200;
 
-        //Thickness of lens border
-        public int BorderThickness { get; set; } = 3;
 
+
+        //Creates a new Settings instance using the default application values.
         public static Settings CreateDefault()
         {
             return new Settings();
