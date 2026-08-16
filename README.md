@@ -48,7 +48,7 @@ Settings are saved automatically and restored the next time the application is l
 
 ## Download and Installation
 
-A prebuilt Windows version is available from the **Releases** section of this repository.
+[Download the latest release](https://github.com/billycook71/Magnifier-Application/releases/latest)
 
 1. Download the latest `MagnifierApplication-v1.0-win-x64.zip`.
 2. Extract the entire ZIP to a folder of your choice.
