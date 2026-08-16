@@ -9,6 +9,7 @@ using System.Linq;
 
 using Forms = System.Windows.Forms;
 using Drawing = System.Drawing;
+using System.Diagnostics;
 
 namespace MagnifierApplication
 {
@@ -100,7 +101,7 @@ namespace MagnifierApplication
         ///each tick captures a frame, updates the overlay, and follows the cursor.
         private void StartLoop()
         {
-            var timer = new DispatcherTimer
+            var timer = new DispatcherTimer(DispatcherPriority.Render)
             {
                 Interval = TimeSpan.FromMilliseconds(16)
             };
