@@ -228,6 +228,12 @@ namespace MagnifierApplication
         {
             if (_settingsWindow != null)
             {
+
+                if(_settingsWindow.WindowState == WindowState.Minimized)
+                {
+                    _settingsWindow.WindowState = WindowState.Normal;
+                }
+
                 _settingsWindow.Activate();
                 return;
             }
@@ -263,7 +269,7 @@ namespace MagnifierApplication
                 _trayIcon = null;
             }
 
-            Close();
+            System.Windows.Application.Current.Shutdown();
         }
         
         //Converts normal window closure into hide-to-tray behavior unless
